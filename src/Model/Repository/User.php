@@ -107,10 +107,10 @@ class User
             return $dataSource;
         }
 
-        $productFilter = function (array $dataSource) use ($search): bool {
+        $userFilter = function (array $dataSource) use ($search): bool {
             return (bool) array_intersect($dataSource, $search);
         };
 
-        return array_filter($dataSource, $productFilter);
+        return array_filter($dataSource, $userFilter);
     }
 }

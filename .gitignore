@@ -8,3 +8,5 @@ phpunit.xml
 /.settings/*
 /.buildpath
 /.project
+/.metadata/*
+/.sonarlint/*

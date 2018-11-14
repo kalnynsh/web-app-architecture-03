@@ -14,6 +14,7 @@ use Service\Discount\NullObject;
 use Service\User\ISecurity;
 use Service\User\Security;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Service\Builder\BasketBuilder;
 
 class Basket
 {
@@ -23,16 +24,22 @@ class Basket
     private const BASKET_DATA_KEY = 'basket';
 
     /**
-     * @var SessionInterface
+     * @property SessionInterface $session
      */
     private $session;
 
     /**
+     * @property BasketBuilder $builder
+     */
+    private $builder;
+
+    /**
      * @param SessionInterface $session
      */
-    public function __construct(SessionInterface $session)
+    public function __construct(SessionInterface $session, BasketBuilder $builder = null)
     {
         $this->session = $session;
+        $this->builder = $builder;
     }
 
     /**
@@ -79,49 +86,27 @@ class Basket
      *
      * @return void
      */
-    public function checkout(): void
+    public function getBasketBuilder(): BasketBuilder
     {
+        $builder = $this->builder;
+
+        $builder->setProducts($this->getProductsInfo());
+
         // Здесь должна быть некоторая логика выбора способа платежа
-        $billing = new Card();
+        // by default `new Card()`
+        $builder->setBilling();
 
         // Здесь должна быть некоторая логика получения информации о скидки пользователя
-        $discount = new NullObject();
+        // by default `new NullObject()`
+        $builder->setDiscounting();
 
         // Здесь должна быть некоторая логика получения способа уведомления пользователя о покупке
-        $communication = new Email();
+        // by default `new Email()`
+        $builder->setCommunication();
 
-        $security = new Security($this->session);
+        $builder->setUsersSecurity(new Security($this->session));
 
-        $this->checkoutProcess($discount, $billing, $security, $communication);
-    }
-
-    /**
-     * Проведение всех этапов заказа
-     *
-     * @param IDiscount $discount,
-     * @param IBilling $billing,
-     * @param ISecurity $security,
-     * @param ICommunication $communication
-     * @return void
-     */
-    public function checkoutProcess(
-        IDiscount $discount,
-        IBilling $billing,
-        ISecurity $security,
-        ICommunication $communication
-    ): void {
-        $totalPrice = 0;
-        foreach ($this->getProductsInfo() as $product) {
-            $totalPrice += $product->getPrice();
-        }
-
-        $discount = $discount->getDiscount();
-        $totalPrice = $totalPrice - $totalPrice / 100 * $discount;
-
-        $billing->pay($totalPrice);
-
-        $user = $security->getUser();
-        $communication->process($user, 'checkout_template');
+        return $builder;
     }
 
     /**

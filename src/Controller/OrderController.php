@@ -9,6 +9,8 @@ use Service\Order\Basket;
 use Service\User\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Service\Builder\BasketBuilder;
+use Service\Process\Checkout;
 
 class OrderController
 {
@@ -26,8 +28,10 @@ class OrderController
             return $this->redirect('order_checkout');
         }
 
-        $productList = (new Basket($request->getSession()))->getProductsInfo();
-        $isLogged = (new Security($request->getSession()))->isLogged();
+        $session = $request->getSession();
+        $busket = $this->getBasket($session);
+        $productList = $busket->getProductsInfo();
+        $isLogged = (new Security($session))->isLogged();
 
         return $this->render('order/info.html.php', ['productList' => $productList, 'isLogged' => $isLogged]);
     }
@@ -40,13 +44,33 @@ class OrderController
      */
     public function checkoutAction(Request $request): Response
     {
-        $isLogged = (new Security($request->getSession()))->isLogged();
+        $session = $request->getSession();
+        $isLogged = (new Security($session))->isLogged();
+
         if (!$isLogged) {
             return $this->redirect('user_authentication');
         }
 
-        (new Basket($request->getSession()))->checkout();
+        $basket = $this->getBasket($session);
+        $basketBuilder = $basket->getBasketBuilder();
+        $this->checkout($basketBuilder);
 
         return $this->render('order/checkout.html.php');
+    }
+
+    public function getBuilder(): BasketBuilder
+    {
+        return new BasketBuilder();
+    }
+
+    public function getBasket($session): Basket
+    {
+        $builder = $this->getBuilder();
+        return new Basket($session, $builder);
+    }
+
+    public function checkout(BasketBuilder $basketBuilder): void
+    {
+        (new Checkout($basketBuilder))->process();
     }
 }

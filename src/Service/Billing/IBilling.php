@@ -9,7 +9,7 @@ use Service\Billing\Exception\BillingException;
 interface IBilling
 {
     /**
-     * Рассчёт стоимости доставки заказа
+     * Декларация сигнатуры метода оплаты
      *
      * @param float $totalPrice
      *
