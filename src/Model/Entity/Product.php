@@ -33,6 +33,13 @@ class Product
         $this->price = $price;
     }
 
+    public function __clone()
+    {
+        $this->id = $this->id;
+        $this->name = $this->name;
+        $this->price = $this->price;
+    }
+
     /**
      * @return int
      */
@@ -55,6 +62,33 @@ class Product
     public function getPrice(): float
     {
         return $this->price;
+    }
+
+    /**
+     * @return Product
+     */
+    public function setId(int $id): Product
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    /**
+     * @return Product
+     */
+    public function setName(string $name): Product
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @return Product
+     */
+    public function setPrice(float $price): Product
+    {
+        $this->price = $price;
+        return $this;
     }
 
     /**

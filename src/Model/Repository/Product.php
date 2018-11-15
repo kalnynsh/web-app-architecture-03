@@ -4,15 +4,15 @@ declare(strict_types = 1);
 
 namespace Model\Repository;
 
-use Model\Entity;
+use Model\Entity\Product as ProductEntity;
 
 class Product
 {
     /**
-     * Поиск продуктов по массиву id
+     * Поиск объектов Продуктов согласно переданному массиву id
      *
      * @param int[] $ids
-     * @return Entity\Product[]
+     * @return ProductEntity[]
      */
     public function search(array $ids = []): array
     {
@@ -20,31 +20,22 @@ class Product
             return [];
         }
 
-        $productList = [];
-        foreach ($this->getDataFromSource(['id' => $ids]) as $item) {
-            $productList[] = new Entity\Product($item['id'], $item['name'], $item['price']);
-        }
-
-        return $productList;
+        return $this->getProductsList($ids);
     }
 
     /**
-     * Получаем все продукты
+     * Получаем все объекты Продуктов
      *
-     * @return Entity\Product[]
+     * @return ProductEntity[]
      */
     public function fetchAll(): array
     {
-        $productList = [];
-        foreach ($this->getDataFromSource() as $item) {
-            $productList[] = new Entity\Product($item['id'], $item['name'], $item['price']);
-        }
-
-        return $productList;
+        return $this->getProductsList();
     }
 
     /**
-     * Получаем продукты из источника данных
+     * Получаем Продукты из источника данных
+     * $search = ['id' => [2, 4]];
      *
      * @param array $search
      *
@@ -110,4 +101,54 @@ class Product
 
         return array_filter($dataSource, $productFilter);
     }
-}
+
+    /**
+     * Получаем прототип Продукта id = 1
+     *
+     * @return ProductEntity
+     */
+    private function getProto(): ProductEntity
+    {
+        $item = $this->getDataFromSource(['id' => [1, ]]);
+        $proto = new ProductEntity($item[0]['id'], $item[0]['name'], $item[0]['price']);
+
+        return $proto;
+    }
+
+    /**
+     * Получаем массив объектов Продуктов
+     *
+     * @return ProductEntity[]
+     */
+    private function getProductsList(array $ids = []): array
+    {
+        $productsList = [];
+        $proto = $this->getProto();
+
+        if (!count($ids)) {
+            foreach ($this->getDataFromSource() as $item) {
+                $product = clone $proto;
+                $product
+                    ->setId($item['id'])
+                    ->setName($item['name'])
+                    ->setPrice($item['price']);
+
+                $productsList[] = $product;
+            }
+
+            return $productsList;
+        }
+
+        foreach ($this->getDataFromSource(['id' => $ids]) as $item) {
+            $product = clone $proto;
+            $product
+                ->setId($item['id'])
+                ->setName($item['name'])
+                ->setPrice($item['price']);
+
+            $productsList[] = $product;
+        }
+
+        return $productsList;
+    }
+}111
