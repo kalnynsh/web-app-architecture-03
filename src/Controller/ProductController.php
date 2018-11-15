@@ -9,6 +9,8 @@ use Service\Order\Basket;
 use Service\Product\Product as ProductService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Service\Sorting\PriceSorter;
+use Service\Sorting\NameSorter;
 
 class ProductController
 {
@@ -29,7 +31,7 @@ class ProductController
             $basket->addProduct((int)$request->request->get('product'));
         }
 
-        $productInfo = (new ProductService())->getInfo((int)$id);
+        $productInfo = $this->getProductService()->getInfo((int)$id);
 
         if ($productInfo === null) {
             return $this->render('error404.html.php');
@@ -49,12 +51,44 @@ class ProductController
      */
     public function listAction(Request $request): Response
     {
-        $productList = (new ProductService())->getAll();
+        $productService = $this->getProductService();
+        $productsList = $productService->getAll();
 
-        // Применить паттерн Стратегия
-        // $request->query->get('price'); // Сортировка по цене
-        // $request->query->get('name'); // Сортировка по имени
+        $sortingParam = $request->query->get('sort') ?? 'name';
+        $sorter = ($sortingParam === 'price') ? $this->getPriceSorter() : $this->getNameSorter();
 
-        return $this->render('product/list.html.php', ['productList' => $productList]);
+        $productsSorted = $productService->sort($sorter, $productsList);
+
+        return $this->render('product/list.html.php', ['productList' => $productsSorted]);
+    }
+
+    /**
+     * Fabric method for getting PriceSorter object
+     *
+     * @return PriceSorter
+     */
+    protected function getPriceSorter(): PriceSorter
+    {
+        return new PriceSorter();
+    }
+
+    /**
+     * Fabric method for getting NameSorter object
+     *
+     * @return NameSorter
+     */
+    protected function getNameSorter(): NameSorter
+    {
+        return new NameSorter();
+    }
+
+    /**
+     * Fabric method for getting Service\Product\Product object
+     *
+     * @return ProductService
+     */
+    protected function getProductService(): ProductService
+    {
+        return new ProductService();
     }
 }
